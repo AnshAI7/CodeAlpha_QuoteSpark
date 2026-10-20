@@ -1742,7 +1742,6 @@ class _QuoteHomePageState extends State<QuoteHomePage>
 
   // Streak
   int _streak = 1;
-  String _lastVisitDate = '';
 
   // Animations
   late AnimationController _fadeCtrl;
@@ -1878,9 +1877,9 @@ class _QuoteHomePageState extends State<QuoteHomePage>
   Future<void> _loadSavedData() async {
     final prefs = await SharedPreferences.getInstance();
     final savedKeys = prefs.getStringList('quotespark_favorites') ?? <String>[];
-    final restoredFavorites = allQuotes.where((q) => savedKeys.contains(q.category + '::' + q.author + '::' + q.text)).toList();
+    final restoredFavorites = allQuotes.where((q) => savedKeys.contains('${q.category}::${q.author}::${q.text}')).toList();
     final now = DateTime.now();
-    final todayKey = now.year.toString().padLeft(4, '0') + '-' + now.month.toString().padLeft(2, '0') + '-' + now.day.toString().padLeft(2, '0');
+    final todayKey = '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final previousKey = prefs.getString('quotespark_last_visit') ?? '';
     var streak = prefs.getInt('quotespark_streak') ?? 0;
     if (previousKey != todayKey) {
@@ -1898,13 +1897,12 @@ class _QuoteHomePageState extends State<QuoteHomePage>
       _favorites..clear()..addAll(restoredFavorites);
       _selectedThemeIndex = prefs.getInt('quotespark_theme') ?? 0;
       _streak = streak;
-      _lastVisitDate = todayKey;
     });
   }
 
   Future<void> _saveFavorites() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('quotespark_favorites', _favorites.map((q) => q.category + '::' + q.author + '::' + q.text).toList());
+    await prefs.setStringList('quotespark_favorites', _favorites.map((q) => '${q.category}::${q.author}::${q.text}').toList());
   }
 
   Future<void> _saveTheme() async {
