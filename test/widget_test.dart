@@ -7,6 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:codealpha_quote_generator/main.dart';
 
@@ -36,6 +37,7 @@ Future<void> pumpFrames(
 /// has enough room and doesn't trigger overflow warnings that
 /// happen with the tiny default 800x600 test surface.
 Future<void> pumpApp(WidgetTester tester) async {
+  SharedPreferences.setMockInitialValues({});
   tester.view.physicalSize = const Size(1080, 2200);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
@@ -82,6 +84,20 @@ void main() {
         find.text('Search or describe your mood...'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('Mood-intent search matches quotes by detected mood', (
+      WidgetTester tester,
+    ) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.byIcon(Icons.search_rounded));
+      await pumpFrames(tester);
+      await tester.enterText(find.byType(TextField), 'khushi');
+      await pumpFrames(tester);
+
+      // Hindi mood keywords should match the mood, not only literal text.
+      expect(find.text('😊'), findsWidgets);
     });
 
     testWidgets(
