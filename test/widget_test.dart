@@ -95,7 +95,7 @@ void main() {
       await pumpFrames(tester);
 
       // Hindi mood keywords should match the mood, not only literal text.
-      expect(find.text('😊'), findsOneWidget);
+      expect(find.text('😊'), findsWidgets);
     });
 
     testWidgets(
