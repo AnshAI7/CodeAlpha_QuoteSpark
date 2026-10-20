@@ -3,6 +3,7 @@
 // Developer: Ansh Mishra | CodeAlpha Internship Project
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 import 'dart:ui';
 
@@ -1859,15 +1860,7 @@ class _QuoteHomePageState extends State<QuoteHomePage>
       });
     });
 
-    // Streak check
-    final today = DateTime.now().toIso8601String().substring(0, 10);
-    if (_lastVisitDate != today) {
-      setState(() {
-        _lastVisitDate = today;
-        _streak++;
-      });
-    }
-
+    _loadSavedData();
     _pickQuoteForTimeOfDay();
   }
 
@@ -1879,6 +1872,44 @@ class _QuoteHomePageState extends State<QuoteHomePage>
     _particleCtrl.dispose();
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  // Restore favorites, theme and daily streak from this device.
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedKeys = prefs.getStringList('quotespark_favorites') ?? <String>[];
+    final restoredFavorites = allQuotes.where((q) => savedKeys.contains(q.category + '::' + q.author + '::' + q.text)).toList();
+    final now = DateTime.now();
+    final todayKey = now.year.toString().padLeft(4, '0') + '-' + now.month.toString().padLeft(2, '0') + '-' + now.day.toString().padLeft(2, '0');
+    final previousKey = prefs.getString('quotespark_last_visit') ?? '';
+    var streak = prefs.getInt('quotespark_streak') ?? 0;
+    if (previousKey != todayKey) {
+      final previousDate = DateTime.tryParse(previousKey);
+      final yesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+      streak = previousDate != null && previousDate.year == yesterday.year && previousDate.month == yesterday.month && previousDate.day == yesterday.day ? streak + 1 : 1;
+      await prefs.setString('quotespark_last_visit', todayKey);
+      await prefs.setInt('quotespark_streak', streak);
+    } else if (streak < 1) {
+      streak = 1;
+      await prefs.setInt('quotespark_streak', streak);
+    }
+    if (!mounted) return;
+    setState(() {
+      _favorites..clear()..addAll(restoredFavorites);
+      _selectedThemeIndex = prefs.getInt('quotespark_theme') ?? 0;
+      _streak = streak;
+      _lastVisitDate = todayKey;
+    });
+  }
+
+  Future<void> _saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('quotespark_favorites', _favorites.map((q) => q.category + '::' + q.author + '::' + q.text).toList());
+  }
+
+  Future<void> _saveTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('quotespark_theme', _selectedThemeIndex);
   }
 
   // ── Filtered pool ─────────────────────────────
@@ -1987,6 +2018,7 @@ class _QuoteHomePageState extends State<QuoteHomePage>
           ? _favorites.remove(_currentQuote)
           : _favorites.add(_currentQuote);
     });
+    _saveFavorites();
     _showSnack(
       _favorites.contains(_currentQuote) ? 'Added to favorites!' : 'Removed!',
       _favorites.contains(_currentQuote)
@@ -2892,6 +2924,7 @@ class _QuoteHomePageState extends State<QuoteHomePage>
                     return GestureDetector(
                       onTap: () {
                         setState(() => _selectedThemeIndex = i);
+                        _saveTheme();
                         setModal(() {});
                       },
                       child: Container(
