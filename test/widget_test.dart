@@ -84,6 +84,20 @@ void main() {
       );
     });
 
+    testWidgets('Mood-intent search matches quotes by detected mood', (
+      WidgetTester tester,
+    ) async {
+      await pumpApp(tester);
+
+      await tester.tap(find.byIcon(Icons.search_rounded));
+      await pumpFrames(tester);
+      await tester.enterText(find.byType(TextField), 'khushi');
+      await pumpFrames(tester);
+
+      // Hindi mood keywords should match the mood, not only literal text.
+      expect(find.text('😊'), findsOneWidget);
+    });
+
     testWidgets(
       'Tapping "New Quote" button does not crash and keeps a quote visible',
       (WidgetTester tester) async {
