@@ -2400,7 +2400,7 @@ class _QuoteHomePageState extends State<QuoteHomePage>
                   Positioned.fill(
                     child: AnimatedBuilder(
                       animation: _particleCtrl,
-                      builder: (_, __) => CustomPaint(
+                      builder: (context, child) => CustomPaint(
                         painter: ParticlePainter(_particles, Colors.white),
                       ),
                     ),
