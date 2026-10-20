@@ -1888,8 +1888,13 @@ class _QuoteHomePageState extends State<QuoteHomePage>
       final catOk =
           _selectedCategory == 'All' || q.category == _selectedCategory;
       final moodOk = _selectedMood == 'All' || q.mood == _selectedMood;
+      // A recognized mood query is an intent filter, not a literal
+      // quote-text search. For example, "khushi" should show Happy quotes
+      // even when the quote itself does not contain the word "khushi".
+      final detectedMood = _detectMoodFromText(_searchQuery);
       final searchOk =
           _searchQuery.isEmpty ||
+          detectedMood != 'All' ||
           q.text.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           q.author.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           q.category.toLowerCase().contains(_searchQuery.toLowerCase());
